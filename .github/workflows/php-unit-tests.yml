@@ -19,8 +19,6 @@ jobs:
           fetch-depth: 3
           submodules: recursive
 
-      - run: cd baserepo
-
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -31,6 +29,7 @@ jobs:
 
       - name: Configure environment
         run: |
+          cd baserepo
           git config --global user.email ""
           git config --global user.name "Symfony"
           git config --global init.defaultBranch main
