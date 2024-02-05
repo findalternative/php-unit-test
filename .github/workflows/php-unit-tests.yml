@@ -9,6 +9,20 @@ permissions:
 jobs:
   tests:
     name: unit tests 
+    env:
+      extensions: amqp,apcu,igbinary,intl,mbstring,memcached,redis,relay
+
+    strategy:
+      matrix:
+        include:
+          - php: '8.2'
+          - php: '8.2'
+            mode: high-deps
+          - php: '8.2'
+            mode: low-deps
+          - php: '8.3'
+            #mode: experimental
+      fail-fast: false
     runs-on: ubuntu-20.04
     defaults:
       run:
@@ -25,7 +39,8 @@ jobs:
         with:
           coverage: "none"
           ini-values: date.timezone=UTC,memory_limit=-1,default_socket_timeout=10,session.gc_probability=0,apc.enable_cli=1,zend.assertions=1
-          php-version: 8.3
+          php-version: "${{ matrix.php }}"
+          extensions: "${{ env.extensions }}"
           tools: flex
 
       - name: Configure environment
