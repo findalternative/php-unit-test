@@ -6,9 +6,9 @@ if ('lint' !== $mode && false === getenv('SYMFONY_PATCH_TYPE_DECLARATIONS')) {
     exit(1);
 }
 
-require __DIR__.'/../.phpunit/phpunit/vendor/autoload.php';
+require __DIR__.'/../baserepo/.phpunit/phpunit/vendor/autoload.php';
 
-$loader = require __DIR__.'/../vendor/autoload.php';
+$loader = require __DIR__.'/../baserepo/vendor/autoload.php';
 
 Symfony\Component\ErrorHandler\DebugClassLoader::enable();
 
