@@ -1,5 +1,4 @@
-name: PHP unit tests 
-
+name: PHP unit tests
 on:
   push:
   pull_request:
@@ -22,20 +21,20 @@ jobs:
     strategy:
       matrix:
         include:
-          - php: '8.3'
+          - php: '8.2'
       fail-fast: false
-
-    runs-on: ubuntu-20.04
 
     defaults:
       run:
         working-directory: ./baserepo
 
+    runs-on: ubuntu-20.04
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 3
           submodules: recursive
 
       - name: Setup PHP
@@ -54,10 +53,10 @@ jobs:
           git config --global init.defaultBranch main
           git config --global advice.detachedHead false
 
-          (php --ri relay 2>&1 > /dev/null) || sudo rm -f /etc/php/*/cli/conf.d/20-relay.ini
+          (php --ri relay 2>&1 > /dev/null) || sudo rm /etc/php/*/cli/conf.d/20-relay.ini
 
           COMPOSER_HOME="$(composer config home)"
-          ([ -d "$COMPOSER_HOME" ] || mkdir "$COMPOSER_HOME") && echo '{"config": {"cache-vcs-dir": "/dev/null", "platform-check": false, "preferred-install": {"symfony/form": "source", "symfony/http-kernel": "source", "symfony/messenger": "source", "symfony/notifier": "source", "symfony/proxy-manager-bridge": "source", "symfony/translation": "source", "symfony/validator": "source", "*": "dist"}, "allow-plugins": {"symfony/flex": true}}}' > "$COMPOSER_HOME/config.json"
+          ([ -d "$COMPOSER_HOME" ] || mkdir "$COMPOSER_HOME") && cp .github/composer-config.json "$COMPOSER_HOME/config.json"
 
           echo COLUMNS=120 >> $GITHUB_ENV
           echo PHPUNIT="$(pwd)/phpunit --exclude-group tty,benchmark,intl-data,integration" >> $GITHUB_ENV
