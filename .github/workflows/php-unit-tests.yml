@@ -9,9 +9,10 @@ permissions:
 jobs:
   tests:
     name: unit tests 
-
     runs-on: ubuntu-20.04
-
+    defaults:
+      run:
+        working-directory: ./baserepo
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,7 +30,6 @@ jobs:
 
       - name: Configure environment
         run: |
-          cd baserepo
           git config --global user.email ""
           git config --global user.name "Symfony"
           git config --global init.defaultBranch main
