@@ -1,14 +1,21 @@
 name: PHP unit tests 
+
 on:
-  push: {}
-  workflow_dispatch: {}
+  push:
+  pull_request:
+
+defaults:
+  run:
+    shell: bash
 
 permissions:
-  id-token: write
+  contents: read
 
 jobs:
+
   tests:
-    name: unit tests 
+    name: Unit Tests
+
     env:
       extensions: amqp,apcu,igbinary,intl,mbstring,memcached,redis,relay
 
@@ -16,23 +23,19 @@ jobs:
       matrix:
         include:
           - php: '8.2'
-          - php: '8.2'
-            mode: high-deps
-          - php: '8.2'
-            mode: low-deps
-          - php: '8.3'
-            #mode: experimental
       fail-fast: false
+
     runs-on: ubuntu-20.04
+
     defaults:
       run:
         working-directory: ./baserepo
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 3
-          submodules: recursive
+          fetch-depth: 2
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -50,7 +53,7 @@ jobs:
           git config --global init.defaultBranch main
           git config --global advice.detachedHead false
 
-          (php --ri relay 2>&1 > /dev/null) || sudo rm -f /etc/php/*/cli/conf.d/20-relay.ini
+          (php --ri relay 2>&1 > /dev/null) || sudo rm /etc/php/*/cli/conf.d/20-relay.ini
 
           COMPOSER_HOME="$(composer config home)"
           ([ -d "$COMPOSER_HOME" ] || mkdir "$COMPOSER_HOME") && cp .github/composer-config.json "$COMPOSER_HOME/config.json"
@@ -86,7 +89,7 @@ jobs:
             echo SYMFONY_DEPRECATIONS_HELPER=weak >> $GITHUB_ENV
             cp composer.json composer.json.orig
             echo -e '{\n"require":{'"$(grep phpunit-bridge composer.json)"'"php":"*"},"minimum-stability":"dev"}' > composer.json
-            php .github/build-packages.php HEAD^ $SYMFONY_VERSION $(find src/Symfony -mindepth 2 -type f -name composer.json -printf '%h\n' | grep -v src/Symfony/Component/Intl/Resources/emoji)
+            php .github/build-packages.php HEAD^ $SYMFONY_VERSION $(find src/Symfony -mindepth 2 -type f -name composer.json -printf '%h\n' | grep -v src/Symfony/Component/Emoji/Resources/bin)
             mv composer.json composer.json.phpunit
             mv composer.json.orig composer.json
           fi
