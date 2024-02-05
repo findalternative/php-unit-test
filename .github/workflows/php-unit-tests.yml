@@ -56,7 +56,7 @@ jobs:
           (php --ri relay 2>&1 > /dev/null) || sudo rm /etc/php/*/cli/conf.d/20-relay.ini
 
           COMPOSER_HOME="$(composer config home)"
-          ([ -d "$COMPOSER_HOME" ] || mkdir "$COMPOSER_HOME") && cp ../.github/composer-config.json "$COMPOSER_HOME/config.json"
+          ([ -d "$COMPOSER_HOME" ] || mkdir "$COMPOSER_HOME") && cp .github/composer-config.json "$COMPOSER_HOME/config.json"
 
           echo COLUMNS=120 >> $GITHUB_ENV
           echo PHPUNIT="$(pwd)/phpunit --exclude-group tty,benchmark,intl-data,integration" >> $GITHUB_ENV
@@ -84,12 +84,12 @@ jobs:
 
           # Create local composer packages for each patched components and reference them in composer.json files when cross-testing components
           if [[ ! "${{ matrix.mode }}" = *-deps ]]; then
-              php ..//.github/build-packages.php HEAD^ $SYMFONY_VERSION src/Symfony/Bridge/PhpUnit
+              php .github/build-packages.php HEAD^ $SYMFONY_VERSION src/Symfony/Bridge/PhpUnit
           else
             echo SYMFONY_DEPRECATIONS_HELPER=weak >> $GITHUB_ENV
             cp composer.json composer.json.orig
             echo -e '{\n"require":{'"$(grep phpunit-bridge composer.json)"'"php":"*"},"minimum-stability":"dev"}' > composer.json
-            php ../.github/build-packages.php HEAD^ $SYMFONY_VERSION $(find src/Symfony -mindepth 2 -type f -name composer.json -printf '%h\n' | grep -v src/Symfony/Component/Emoji/Resources/bin)
+            php .github/build-packages.php HEAD^ $SYMFONY_VERSION $(find src/Symfony -mindepth 2 -type f -name composer.json -printf '%h\n' | grep -v src/Symfony/Component/Emoji/Resources/bin)
             mv composer.json composer.json.phpunit
             mv composer.json.orig composer.json
           fi
@@ -139,19 +139,19 @@ jobs:
       - name: Patch return types
         if: "matrix.php == '8.2' && ! matrix.mode"
         run: |
-          patch -sp1 < ../.github/expected-missing-return-types.diff
+          patch -sp1 < .github/expected-missing-return-types.diff
           git add .
           composer install -q --optimize-autoloader || composer install --optimize-autoloader
-          SYMFONY_PATCH_TYPE_DECLARATIONS='force=2&php=8.2' php ../.github/patch-types.php
+          SYMFONY_PATCH_TYPE_DECLARATIONS='force=2&php=8.2' php .github/patch-types.php
           git checkout src/Symfony/Contracts/Service/ResetInterface.php
-          SYMFONY_PATCH_TYPE_DECLARATIONS='force=2&php=8.2' php ../.github/patch-types.php # ensure the script is idempotent
+          SYMFONY_PATCH_TYPE_DECLARATIONS='force=2&php=8.2' php .github/patch-types.php # ensure the script is idempotent
           git checkout src/Symfony/Contracts/Service/ResetInterface.php
           git diff --exit-code
 
       - name: Check return types
         if: "matrix.php == '8.2' && ! matrix.mode"
         run: |
-          php ../.github/patch-types.php lint
+          php .github/patch-types.php lint
 
       - name: Run tests
         run: |
