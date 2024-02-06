@@ -24,18 +24,15 @@ jobs:
           - php: '8.2'
             mode: high-deps
       fail-fast: false
-
-
-
+      
     runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          repository: symfony/symfony
-          ref: 0ba5558855d21d506ab5282307c56d5274df7d06
-          fetch-depth: 2
+          fetch-depth: 3
+          submodules: recursive
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -48,6 +45,7 @@ jobs:
 
       - name: Configure environment
         run: |
+          mv ./baserepo/* ./
           git config --global user.email ""
           git config --global user.name "Symfony"
           git config --global init.defaultBranch main
