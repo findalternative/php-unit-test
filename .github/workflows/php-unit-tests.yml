@@ -35,7 +35,7 @@ jobs:
           submodules: recursive
 
       - name: Extract baserepo
-        run: "rm -rf baserepo/.git && mv .git/modules/baserepo baserepo/.git && mv baserepo ~/ && cd .. && rm -rf php-unit-tests && mv ~/baserepo php-unit-tests && cd php-unit-tests/ && git config --unset core.worktree"
+        run: "rm -rf baserepo/.git && mv .git/modules/baserepo baserepo/.git && mv baserepo ~/ && cd .. && rm -rf php-unit-tests && mv ~/baserepo php-unit-tests && cd php-unit-tests/ && sed -i '/worktree/d' .git/config"
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
