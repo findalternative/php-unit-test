@@ -25,9 +25,7 @@ jobs:
             mode: low-deps
       fail-fast: false
 
-    defaults:
-      run:
-        working-directory: ./baserepo
+
 
     runs-on: ubuntu-20.04
 
@@ -35,8 +33,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 3
-          submodules: recursive
+          repository: symfony/symfony
+          ref: 0ba5558855d21d506ab5282307c56d5274df7d06
+          fetch-depth: 2
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
