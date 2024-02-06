@@ -44,7 +44,7 @@ jobs:
           tools: flex
           
       - name: Extract baserepo
-        run: "ls -a | grep -Exv '.|..|baserepo' | xargs rm -r && mv ./baserepo/* ./ && rm ./baserepo"
+        run: "ls -a | grep -Exv '.|..|baserepo' | xargs rm -r && mv ./baserepo/* ./ && rm -r ./baserepo"
         
       - name: Configure environment
         run: |
