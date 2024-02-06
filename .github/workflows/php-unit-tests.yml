@@ -45,7 +45,7 @@ jobs:
         
       - name: Configure environment
         run: |
-          ls -a | grep -Exv '.|..|baserepo' | xargs rm -r && mv ./baserepo/* ./ && rm -r ./baserepo
+          mv baserepo ~/ && cd .. && rm -r $OLDPWD && mv ~/baserepo/ $OLDPWD && cd $OLDPWD
           git config --global user.email ""
           git config --global user.name "Symfony"
           git config --global init.defaultBranch main
