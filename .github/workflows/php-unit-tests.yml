@@ -1,36 +1,26 @@
 name: PHP unit tests
+
 on:
   push:
-  pull_request:
-
-defaults:
-  run:
-    shell: bash
-
-permissions:
-  contents: read
+  workflow_dispatch:
 
 jobs:
 
   tests:
     name: Unit Tests
 
-    env:
-      extensions: amqp,apcu,igbinary,intl,mbstring,memcached,redis,relay
-
     strategy:
       matrix:
         include:
           - php: '8.2'
-      fail-fast: false
-      
+            mode: high-deps
+          
     runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 3
           submodules: recursive
 
       - name: Extract baserepo
