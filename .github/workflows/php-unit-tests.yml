@@ -42,12 +42,10 @@ jobs:
           php-version: "${{ matrix.php }}"
           extensions: "${{ env.extensions }}"
           tools: flex
-          
-      - name: Extract baserepo
-        run: "ls -a | grep -Exv '.|..|baserepo' | xargs rm -r && mv ./baserepo/* ./ && rm -r ./baserepo"
         
       - name: Configure environment
         run: |
+          ls -a | grep -Exv '.|..|baserepo' | xargs rm -r && mv ./baserepo/* ./ && rm -r ./baserepo
           git config --global user.email ""
           git config --global user.name "Symfony"
           git config --global init.defaultBranch main
