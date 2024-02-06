@@ -22,7 +22,7 @@ jobs:
       matrix:
         include:
           - php: '8.2'
-            mode: low-deps
+            mode: high-deps
       fail-fast: false
 
 
