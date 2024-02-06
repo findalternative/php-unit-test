@@ -2,16 +2,21 @@ name: PHP unit tests
 on:
   push:
   workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   tests:
     name: Unit Tests
     runs-on: ubuntu-20.04
+    env:
+      extensions: amqp,apcu,igbinary,intl,mbstring,memcached,redis,relay
     strategy:
       matrix:
         include:
           - php: '8.2'
             mode: high-deps
     steps:
+    
       - name: Checkout
         uses: actions/checkout@v3
         with:
@@ -27,8 +32,8 @@ jobs:
         with:
           coverage: "none"
           ini-values: date.timezone=UTC,memory_limit=-1,default_socket_timeout=10,session.gc_probability=0,apc.enable_cli=1,zend.assertions=1
-          php-version: "8.2"
-          extensions: "amqp,apcu,igbinary,intl,mbstring,memcached,redis,relay"
+          php-version: "${{ matrix.php }}"
+          extensions: "${{ env.extensions }}"
           tools: flex
         
       - name: Configure environment
@@ -98,6 +103,7 @@ jobs:
           if [[ "${{ matrix.mode }}" = low-deps ]]; then
             echo SYMFONY_PHPUNIT_REQUIRE="nikic/php-parser:^4.18" >> $GITHUB_ENV
           fi
+          
       - name: Install dependencies
         run: |
           echo "::group::composer update"
@@ -106,6 +112,7 @@ jobs:
           echo "::group::install phpunit"
           ./phpunit install
           echo "::endgroup::"
+          
       - name: Patch return types
         if: "matrix.php == '8.2' && ! matrix.mode"
         run: |
@@ -117,10 +124,12 @@ jobs:
           SYMFONY_PATCH_TYPE_DECLARATIONS='force=2&php=8.2' php .github/patch-types.php # ensure the script is idempotent
           git checkout src/Symfony/Contracts/Service/ResetInterface.php
           git diff --exit-code
+          
       - name: Check return types
         if: "matrix.php == '8.2' && ! matrix.mode"
         run: |
           php .github/patch-types.php lint
+          
       - name: Run tests
         run: |
           _run_tests() {
@@ -172,10 +181,12 @@ jobs:
               fi
           fi
           [[ ! $X ]] || (exit 1)
+          
       - name: Run TTY tests
         if: "! matrix.mode"
         run: |
             script -e -c './phpunit --group tty' /dev/null
+            
       - name: Run tests with SIGCHLD enabled PHP
         if: "matrix.php == '8.2' && ! matrix.mode"
         run: |
