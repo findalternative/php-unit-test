@@ -1,32 +1,39 @@
+
 name: PHP unit tests
 on:
   push:
-  workflow_dispatch:
+  pull_request:
+defaults:
+  run:
+    shell: bash
 permissions:
   contents: read
+
 jobs:
   tests:
     name: Unit Tests
-    runs-on: ubuntu-20.04
-    env:
-      extensions: amqp,apcu,igbinary,intl,mbstring,memcached,redis,relay
     strategy:
       matrix:
         include:
           - php: '8.2'
             mode: high-deps
+      fail-fast: false
+    runs-on: ubuntu-20.04
+    env:
+      extensions: amqp,apcu,igbinary,intl,mbstring,memcached,redis,relay
     steps:
     
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
+          fetch-depth: 3
           submodules: recursive
 
       - name: Extract baserepo
         run: | 
           rm -rf baserepo/.git && mv .git/modules/baserepo baserepo/.git && sed -i '/worktree/d' baserepo/.git/config
           mv baserepo ~/ && cd .. && rm -rf $OLDPWD && mv ~/baserepo $OLDPWD && cd $OLDPWD
-
+          
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
