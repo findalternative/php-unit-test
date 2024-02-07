@@ -62,7 +62,7 @@ jobs:
 
           # test commands setup
           echo COMPONENTS=$(find src/Symfony -mindepth 2 -type f -name phpunit.xml.dist | xargs -I{} dirname {}) >> $GITHUB_ENV
-          echo PHPUNIT="$(pwd)/phpunit --exclude-group benchmark,intl-data,integration" >> $GITHUB_ENV
+          echo PHPUNIT="$(pwd)/phpunit --exclude-group tty,benchmark,intl-data,integration" >> $GITHUB_ENV
       - name: Install dependencies
         run: |
           echo "::group::composer update"
