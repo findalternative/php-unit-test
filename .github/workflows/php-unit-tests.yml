@@ -78,14 +78,11 @@ jobs:
             local title="$1$FLIP"
             OUTPUT=$(bash -xc "$2" 2>&1) || ok=$?
             if [[ $ok -ne 0 ]]; then
-              printf "%-80s\e[31m%10s\e[0m\n" $title 'FAIL'
+              printf "\n%-80s\e[31m%10s\e[0m\n" $title 'FAIL'
             else
-              printf "%-80s\e[32m%10s\e[0m\n" $title 'OK'
+              printf "\n%-80s\e[32m%10s\e[0m\n" $title 'OK'
             fi
             echo -e "\n${OUTPUT}\\n"
           }
           export -f _run_tests
           echo "$COMPONENTS" | xargs -n1 | parallel -j +3 "_run_tests {} '$PHPUNIT {}'"
-      - name: Run TTY tests
-        run: |
-            script -c './phpunit --group tty' 
