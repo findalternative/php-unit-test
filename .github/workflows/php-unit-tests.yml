@@ -14,6 +14,15 @@ jobs:
 
   tests:
     name: Unit Tests
+
+    env:
+      extensions: amqp,apcu,igbinary,intl,mbstring,memcached,redis,relay
+
+    strategy:
+      matrix:
+        include:
+          - php: '8.3'
+      fail-fast: false
       
     runs-on: ubuntu-20.04
 
@@ -32,8 +41,8 @@ jobs:
         with:
           coverage: "none"
           ini-values: date.timezone=UTC,memory_limit=-1,default_socket_timeout=10,session.gc_probability=0,apc.enable_cli=1,zend.assertions=1
-          php-version: "8.3"
-          extensions: "amqp,apcu,igbinary,intl,mbstring,memcached,redis,relay"
+          php-version: "${{ matrix.php }}"
+          extensions: "${{ env.extensions }}"
           tools: flex
         
       - name: Configure environment
