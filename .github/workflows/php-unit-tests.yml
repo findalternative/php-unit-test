@@ -82,9 +82,10 @@ jobs:
             else
               printf "%-80s\e[32m%10s\e[0m\n" $title 'OK'
             fi
+            echo -e "\n${OUTPUT}\\n"
           }
           export -f _run_tests
           echo "$COMPONENTS" | xargs -n1 | parallel -j +3 "_run_tests {} '$PHPUNIT {}'"
       - name: Run TTY tests
         run: |
-            script -c './phpunit --group tty' /dev/null
+            script -c './phpunit --group tty' 
