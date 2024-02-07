@@ -57,6 +57,10 @@ jobs:
           # echo COMPOSER_ROOT_VERSION=$SYMFONY_VERSION.x-dev >> $GITHUB_ENV
           # echo SYMFONY_REQUIRE=">=${SYMFONY_VERSION}" >> $GITHUB_ENV
           # echo COLUMNS=150 >> $GITHUB_ENV
+          git config --global user.email ""
+          git config --global user.name "Symfony"
+          git config --global init.defaultBranch main
+          git config --global advice.detachedHead false
 
           (php --ri relay 2>&1 > /dev/null) || sudo rm /etc/php/*/cli/conf.d/20-relay.ini
           COMPOSER_HOME="$(composer config home)"
