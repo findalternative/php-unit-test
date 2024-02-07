@@ -60,8 +60,8 @@ jobs:
           php .github/build-packages.php HEAD^ $SYMFONY_VERSION src/Symfony/Bridge/PhpUnit
           #echo SYMFONY_VERSION=$SYMFONY_VERSION >> $GITHUB_ENV
           #echo COMPOSER_ROOT_VERSION=$SYMFONY_VERSION.x-dev >> $GITHUB_ENV
-          #echo SYMFONY_REQUIRE=">=${SYMFONY_VERSION}" >> $GITHUB_ENV
-          #echo COLUMNS=120 >> $GITHUB_ENV
+          echo SYMFONY_REQUIRE=">=${SYMFONY_VERSION}" >> $GITHUB_ENV
+          echo COLUMNS=120 >> $GITHUB_ENV
 
           composer update --no-progress --ansi
           ./phpunit install
