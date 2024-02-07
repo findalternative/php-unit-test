@@ -51,26 +51,16 @@ jobs:
           (php --ri relay 2>&1 > /dev/null) || sudo rm /etc/php/*/cli/conf.d/20-relay.ini
           COMPOSER_HOME="$(composer config home)"
           ([ -d "$COMPOSER_HOME" ] || mkdir "$COMPOSER_HOME") && cp .github/composer-config.json "$COMPOSER_HOME/config.json"
-          echo COMPOSER_UP='composer update --no-progress --ansi' >> $GITHUB_ENV
-          SYMFONY_VERSION=$(grep ' VERSION = ' src/Symfony/Component/HttpKernel/Kernel.php | cut -d "'" -f2 | cut -d '.' -f 1-2)
-          # php .github/build-packages.php HEAD^ $SYMFONY_VERSION src/Symfony/Bridge/PhpUnit
-          echo SYMFONY_VERSION=$SYMFONY_VERSION >> $GITHUB_ENV
-          echo COMPOSER_ROOT_VERSION=$SYMFONY_VERSION.x-dev >> $GITHUB_ENV
-          echo SYMFONY_REQUIRE=">=${SYMFONY_VERSION}" >> $GITHUB_ENV
-          echo COLUMNS=150 >> $GITHUB_ENV
-          # test commands setup
-          echo COMPONENTS=$(find src/Symfony -mindepth 2 -type f -name phpunit.xml.dist | xargs -I{} dirname {}) >> $GITHUB_ENV
-          echo PHPUNIT="$(pwd)/phpunit --exclude-group tty,benchmark,intl-data,integration" >> $GITHUB_ENV
-      - name: Install dependencies
-        run: |
-          echo "::group::composer update"
-          $COMPOSER_UP
-          echo "::endgroup::"
-          echo "::group::install phpunit"
+          #SYMFONY_VERSION=$(grep ' VERSION = ' src/Symfony/Component/HttpKernel/Kernel.php | cut -d "'" -f2 | cut -d '.' -f 1-2)
+          #php .github/build-packages.php HEAD^ $SYMFONY_VERSION src/Symfony/Bridge/PhpUnit
+          #echo SYMFONY_VERSION=$SYMFONY_VERSION >> $GITHUB_ENV
+          #echo COMPOSER_ROOT_VERSION=$SYMFONY_VERSION.x-dev >> $GITHUB_ENV
+          #echo SYMFONY_REQUIRE=">=${SYMFONY_VERSION}" >> $GITHUB_ENV
+          #echo COLUMNS=150 >> $GITHUB_ENV
           composer update --no-progress --ansi
           ./phpunit install
-          echo "::endgroup::" 
-          echo $(git rev-parse HEAD)
+      - name: Install dependencies
+        run: |
       - name: Run tests
         run: |
           _run_tests() {
@@ -85,4 +75,6 @@ jobs:
             echo "$OUTPUT::endgroup::"
           }
           export -f _run_tests
+          COMPONENTS=$(find src/Symfony -mindepth 2 -type f -name phpunit.xml.dist | xargs -I{} dirname {})
+          PHPUNIT="$(pwd)/phpunit --exclude-group tty,benchmark,intl-data,integration"
           echo "$COMPONENTS" | xargs -n1 | parallel -j +3 "_run_tests {} '$PHPUNIT {}'"
