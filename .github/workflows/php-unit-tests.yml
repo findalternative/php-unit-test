@@ -70,6 +70,7 @@ jobs:
           composer update --no-progress --ansi
           ./phpunit install
           echo "::endgroup::" 
+          echo $(git rev-parse HEAD)
       - name: Run tests
         run: |
           _run_tests() {
