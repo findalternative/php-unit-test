@@ -54,6 +54,7 @@ jobs:
           # echo COMPOSER_ROOT_VERSION=$SYMFONY_VERSION.x-dev >> $GITHUB_ENV
           # echo SYMFONY_REQUIRE=">=${SYMFONY_VERSION}" >> $GITHUB_ENV
           # echo COLUMNS=150 >> $GITHUB_ENV
+          cd baserepo
           git config --global user.email ""
           git config --global user.name "Symfony"
           git config --global init.defaultBranch main
@@ -74,6 +75,7 @@ jobs:
           ./phpunit install
       - name: Run tests
         run: |
+          cd baserepo
           _run_tests() {
             local ok=0
             local title="$1$FLIP"
