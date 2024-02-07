@@ -21,8 +21,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - php: '8.2'
-            mode: low-deps
+          - php: '8.3'
       fail-fast: false
       
     runs-on: ubuntu-20.04
@@ -48,37 +47,22 @@ jobs:
         
       - name: Configure environment
         run: |
-          git config --global user.email ""
-          git config --global user.name "Symfony"
-          git config --global init.defaultBranch main
-          git config --global advice.detachedHead false
-
+          # composer setup
           (php --ri relay 2>&1 > /dev/null) || sudo rm /etc/php/*/cli/conf.d/20-relay.ini
           COMPOSER_HOME="$(composer config home)"
           ([ -d "$COMPOSER_HOME" ] || mkdir "$COMPOSER_HOME") && cp .github/composer-config.json "$COMPOSER_HOME/config.json"
+          echo COMPOSER_UP='composer update --no-progress --ansi' >> $GITHUB_ENV
 
-          echo COLUMNS=120 >> $GITHUB_ENV
-          echo PHPUNIT="$(pwd)/phpunit --exclude-group tty,benchmark,intl-data,integration" >> $GITHUB_ENV
-          echo COMPOSER_UP="composer update --no-progress --ansi --ignore-platform-req=php+" >> $GITHUB_ENV
-
-          SYMFONY_VERSIONS=$(git ls-remote -q --heads | cut -f2 | grep -o '/[1-9][0-9]*\.[0-9].*' | sort -V)
           SYMFONY_VERSION=$(grep ' VERSION = ' src/Symfony/Component/HttpKernel/Kernel.php | cut -d "'" -f2 | cut -d '.' -f 1-2)
-          SYMFONY_FEATURE_BRANCH=$(curl -s https://raw.githubusercontent.com/symfony/recipes/flex/main/index.json | jq -r '.versions."dev-name"')
-
-          echo SYMFONY_DEPRECATIONS_HELPER=weak >> $GITHUB_ENV
-          cp composer.json composer.json.orig
-          echo -e '{\n"require":{'"$(grep phpunit-bridge composer.json)"'"php":"*"},"minimum-stability":"dev"}' > composer.json
-          php .github/build-packages.php HEAD^ $SYMFONY_VERSION $(find src/Symfony -mindepth 2 -type f -name composer.json -printf '%h\n' | grep -v src/Symfony/Component/Emoji/Resources/bin)
-          mv composer.json composer.json.phpunit
-          mv composer.json.orig composer.json
-
-          echo COMPONENTS=$(find src/Symfony -mindepth 2 -type f -name phpunit.xml.dist | xargs -I{} dirname {}) >> $GITHUB_ENV
-
+          php .github/build-packages.php HEAD^ $SYMFONY_VERSION src/Symfony/Bridge/PhpUnit
           echo SYMFONY_VERSION=$SYMFONY_VERSION >> $GITHUB_ENV
           echo COMPOSER_ROOT_VERSION=$SYMFONY_VERSION.x-dev >> $GITHUB_ENV
-          echo SYMFONY_REQUIRE=">=5.4" >> $GITHUB_ENV
-          mv composer.json.phpunit composer.json
-          echo SYMFONY_PHPUNIT_REQUIRE="nikic/php-parser:^4.18" >> $GITHUB_ENV
+          echo SYMFONY_REQUIRE=">=${SYMFONY_VERSION}" >> $GITHUB_ENV
+          echo COLUMNS=150 >> $GITHUB_ENV
+
+          # test commands setup
+          echo COMPONENTS=$(find src/Symfony -mindepth 2 -type f -name phpunit.xml.dist | xargs -I{} dirname {}) >> $GITHUB_ENV
+          echo PHPUNIT="$(pwd)/phpunit --exclude-group tty,benchmark,intl-data,integration" >> $GITHUB_ENV
       - name: Install dependencies
         run: |
           echo "::group::composer update"
@@ -92,49 +76,17 @@ jobs:
           _run_tests() {
             local ok=0
             local title="$1$FLIP"
-            local start=$(date -u +%s)
             OUTPUT=$(bash -xc "$2" 2>&1) || ok=$?
-            local end=$(date -u +%s)
             if [[ $ok -ne 0 ]]; then
-              printf "\n%-70s%10s\n" $title $(($end-$start))s
+              printf "\n%-70s\n" $title "\\e[31mFAIL\\e[0m"
               echo "$OUTPUT"
               echo "Job exited with: $ok"
-              echo -e "\n::error::KO $title\\n"
             else
-              printf "::group::%-68s%10s\n" $title $(($end-$start))s
-              echo "$OUTPUT"
-              echo -e "\n\\e[32mOK\\e[0m $title\\n\\n::endgroup::"
+              printf "\n%-68s%10s\n" $title "\\e[32mOK\\e[0m"
             fi
-            [[ "${{ matrix.mode }}" = experimental ]] || (exit $ok)
           }
           export -f _run_tests
-          if [[ ! "${{ matrix.mode }}" = *-deps ]]; then
-            echo "$COMPONENTS" | xargs -n1 | parallel -j +3 "_run_tests {} '$PHPUNIT {}'"
-            exit 0
-          fi
-          if [[ "${{ matrix.mode }}" = low-deps ]]; then
-            echo "$COMPONENTS" | xargs -n1 | parallel -j +3 "_run_tests {} 'cd {} && $COMPOSER_UP --prefer-lowest --prefer-stable && $PHPUNIT'"
-            exit 0
-          fi
-          # matrix.mode = high-deps
-          echo "$COMPONENTS" | xargs -n1 | parallel -j +3 "_run_tests {} 'cd {} && $COMPOSER_UP && $PHPUNIT$LEGACY'" || X=1
-          # get a list of the patched components (relies on .github/build-packages.php being called in the previous step)
-          PATCHED_COMPONENTS=$(git diff --name-only src/ | grep composer.json || true)
-          # for 6.4 LTS, checkout and test previous major with the patched components (only for patched components)
-          if [[ $PATCHED_COMPONENTS && $SYMFONY_VERSION = 6.4 ]]; then
-              export FLIP='^'
-              SYMFONY_VERSION=$(echo $SYMFONY_VERSION | awk '{print $1 - 1}')
-              echo -e "\\n\\e[33;1mChecking out Symfony $SYMFONY_VERSION and running tests with patched components as deps\\e[0m"
-              export COMPOSER_ROOT_VERSION=$SYMFONY_VERSION.x-dev
-              export SYMFONY_REQUIRE=">=$SYMFONY_VERSION"
-              git fetch --depth=2 origin $SYMFONY_VERSION
-              git checkout -m FETCH_HEAD
-              PATCHED_COMPONENTS=$(echo "$PATCHED_COMPONENTS" | xargs dirname | xargs -n1 -I{} bash -c "[ -e '{}/phpunit.xml.dist' ] && echo '{}'" | sort || true)
-              if [[ $PATCHED_COMPONENTS ]]; then
-                echo "::group::install phpunit"
-                ./phpunit install
-                echo "::endgroup::"
-                echo "$PATCHED_COMPONENTS" | parallel -j +3 "_run_tests {} 'cd {} && rm composer.lock vendor/ -Rf && $COMPOSER_UP && $PHPUNIT$LEGACY'" || X=1
-              fi
-          fi
-          [[ ! $X ]] || (exit 1)
+          echo "$COMPONENTS" | xargs -n1 | parallel -j +3 "_run_tests {} '$PHPUNIT {}'"
+      - name: Run TTY tests
+        run: |
+            script -c './phpunit --group tty' /dev/null
