@@ -162,7 +162,6 @@ jobs:
             local ok=0
             local title="$1$FLIP"
             OUTPUT=$(bash -xc "$2" 2>&1) || ok=$?
-            echo "::group::"
             if [[ $ok -ne 0 ]]; then
               printf "::group::%-80s\e[31m%10s\e[0m\n" $title 'FAIL'
               echo "$OUTPUT"
