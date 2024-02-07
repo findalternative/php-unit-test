@@ -55,18 +55,16 @@ jobs:
           SYMFONY_VERSION=$(grep ' VERSION = ' src/Symfony/Component/HttpKernel/Kernel.php | cut -d "'" -f2 | cut -d '.' -f 1-2)
 
           echo COLUMNS=150 >> $GITHUB_ENV
-          echo PHPUNIT="$(pwd)/phpunit --exclude-group tty,benchmark,intl-data,integration" >> $GITHUB_ENV
+          echo PHPUNIT="$(pwd)/phpunit --exclude-group benchmark,intl-data,integration" >> $GITHUB_ENV
           echo COMPOSER_UP='composer update --no-progress --ansi' >> $GITHUB_ENV
 
 
           php .github/build-packages.php HEAD^ $SYMFONY_VERSION src/Symfony/Bridge/PhpUnit
-          # Skip the phpunit-bridge on bugfix-branches when not in *-deps mode
-          # echo COMPONENTS=$(find src/Symfony -mindepth 2 -type f -name phpunit.xml.dist -not -wholename '*/Bridge/PhpUnit/*' | xargs -I{} dirname {}) >> $GITHUB_ENV
           echo COMPONENTS=$(find src/Symfony -mindepth 2 -type f -name phpunit.xml.dist | xargs -I{} dirname {}) >> $GITHUB_ENV
 
           echo SYMFONY_VERSION=$SYMFONY_VERSION >> $GITHUB_ENV
           echo COMPOSER_ROOT_VERSION=$SYMFONY_VERSION.x-dev >> $GITHUB_ENV
-          echo SYMFONY_REQUIRE=">=$([ '${{ matrix.mode }}' = low-deps ] && echo 5.4 || echo $SYMFONY_VERSION)" >> $GITHUB_ENV
+          echo SYMFONY_REQUIRE=">=${SYMFONY_VERSION}" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: |
@@ -94,39 +92,9 @@ jobs:
               echo "$OUTPUT"
               echo -e "\n\\e[32mOK\\e[0m $title\\n\\n::endgroup::"
             fi
-            [[ "${{ matrix.mode }}" = experimental ]] || (exit $ok)
           }
           export -f _run_tests
-          if [[ ! "${{ matrix.mode }}" = *-deps ]]; then
-            echo "$COMPONENTS" | xargs -n1 | parallel -j +3 "_run_tests {} '$PHPUNIT {}'"
-            exit 0
-          fi
-          if [[ "${{ matrix.mode }}" = low-deps ]]; then
-            echo "$COMPONENTS" | xargs -n1 | parallel -j +3 "_run_tests {} 'cd {} && $COMPOSER_UP --prefer-lowest --prefer-stable && $PHPUNIT'"
-            exit 0
-          fi
-          # matrix.mode = high-deps
-          echo "$COMPONENTS" | xargs -n1 | parallel -j +3 "_run_tests {} 'cd {} && $COMPOSER_UP && $PHPUNIT$LEGACY'" || X=1
-          # get a list of the patched components (relies on .github/build-packages.php being called in the previous step)
-          PATCHED_COMPONENTS=$(git diff --name-only src/ | grep composer.json || true)
-          # for 6.4 LTS, checkout and test previous major with the patched components (only for patched components)
-          if [[ $PATCHED_COMPONENTS && $SYMFONY_VERSION = 6.4 ]]; then
-              export FLIP='^'
-              SYMFONY_VERSION=$(echo $SYMFONY_VERSION | awk '{print $1 - 1}')
-              echo -e "\\n\\e[33;1mChecking out Symfony $SYMFONY_VERSION and running tests with patched components as deps\\e[0m"
-              export COMPOSER_ROOT_VERSION=$SYMFONY_VERSION.x-dev
-              export SYMFONY_REQUIRE=">=$SYMFONY_VERSION"
-              git fetch --depth=2 origin $SYMFONY_VERSION
-              git checkout -m FETCH_HEAD
-              PATCHED_COMPONENTS=$(echo "$PATCHED_COMPONENTS" | xargs dirname | xargs -n1 -I{} bash -c "[ -e '{}/phpunit.xml.dist' ] && echo '{}'" | sort || true)
-              if [[ $PATCHED_COMPONENTS ]]; then
-                echo "::group::install phpunit"
-                ./phpunit install
-                echo "::endgroup::"
-                echo "$PATCHED_COMPONENTS" | parallel -j +3 "_run_tests {} 'cd {} && rm composer.lock vendor/ -Rf && $COMPOSER_UP && $PHPUNIT$LEGACY'" || X=1
-              fi
-          fi
-          [[ ! $X ]] || (exit 1)
+          echo "$COMPONENTS" | xargs -n1 | parallel -j +3 "_run_tests {} '$PHPUNIT {}'"
       - name: Run TTY tests
         run: |
-            script -e -c './phpunit --group tty' /dev/null
+            script -c './phpunit --group tty' /dev/null
