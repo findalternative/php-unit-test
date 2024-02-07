@@ -21,8 +21,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - php: '8.3'
-            mode: experimental
+          - php: '8.2'
+            mode: low-deps
       fail-fast: false
       
     runs-on: ubuntu-20.04
@@ -48,24 +48,37 @@ jobs:
         
       - name: Configure environment
         run: |
+          git config --global user.email ""
+          git config --global user.name "Symfony"
+          git config --global init.defaultBranch main
+          git config --global advice.detachedHead false
+
           (php --ri relay 2>&1 > /dev/null) || sudo rm /etc/php/*/cli/conf.d/20-relay.ini
           COMPOSER_HOME="$(composer config home)"
           ([ -d "$COMPOSER_HOME" ] || mkdir "$COMPOSER_HOME") && cp .github/composer-config.json "$COMPOSER_HOME/config.json"
 
+          echo COLUMNS=120 >> $GITHUB_ENV
+          echo PHPUNIT="$(pwd)/phpunit --exclude-group tty,benchmark,intl-data,integration" >> $GITHUB_ENV
+          echo COMPOSER_UP="composer update --no-progress --ansi --ignore-platform-req=php+" >> $GITHUB_ENV
+
+          SYMFONY_VERSIONS=$(git ls-remote -q --heads | cut -f2 | grep -o '/[1-9][0-9]*\.[0-9].*' | sort -V)
           SYMFONY_VERSION=$(grep ' VERSION = ' src/Symfony/Component/HttpKernel/Kernel.php | cut -d "'" -f2 | cut -d '.' -f 1-2)
+          SYMFONY_FEATURE_BRANCH=$(curl -s https://raw.githubusercontent.com/symfony/recipes/flex/main/index.json | jq -r '.versions."dev-name"')
 
-          echo COLUMNS=150 >> $GITHUB_ENV
-          echo PHPUNIT="$(pwd)/phpunit --exclude-group benchmark,intl-data,integration" >> $GITHUB_ENV
-          echo COMPOSER_UP='composer update --no-progress --ansi' >> $GITHUB_ENV
+          echo SYMFONY_DEPRECATIONS_HELPER=weak >> $GITHUB_ENV
+          cp composer.json composer.json.orig
+          echo -e '{\n"require":{'"$(grep phpunit-bridge composer.json)"'"php":"*"},"minimum-stability":"dev"}' > composer.json
+          php .github/build-packages.php HEAD^ $SYMFONY_VERSION $(find src/Symfony -mindepth 2 -type f -name composer.json -printf '%h\n' | grep -v src/Symfony/Component/Emoji/Resources/bin)
+          mv composer.json composer.json.phpunit
+          mv composer.json.orig composer.json
 
-
-          php .github/build-packages.php HEAD^ $SYMFONY_VERSION src/Symfony/Bridge/PhpUnit
           echo COMPONENTS=$(find src/Symfony -mindepth 2 -type f -name phpunit.xml.dist | xargs -I{} dirname {}) >> $GITHUB_ENV
 
           echo SYMFONY_VERSION=$SYMFONY_VERSION >> $GITHUB_ENV
           echo COMPOSER_ROOT_VERSION=$SYMFONY_VERSION.x-dev >> $GITHUB_ENV
-          echo SYMFONY_REQUIRE=">=${SYMFONY_VERSION}" >> $GITHUB_ENV
-
+          echo SYMFONY_REQUIRE=">=5.4" >> $GITHUB_ENV
+          mv composer.json.phpunit composer.json
+          echo SYMFONY_PHPUNIT_REQUIRE="nikic/php-parser:^4.18" >> $GITHUB_ENV
       - name: Install dependencies
         run: |
           echo "::group::composer update"
@@ -92,9 +105,6 @@ jobs:
               echo "$OUTPUT"
               echo -e "\n\\e[32mOK\\e[0m $title\\n\\n::endgroup::"
             fi
+            (exit $ok)
           }
-          export -f _run_tests
-          echo "$COMPONENTS" | xargs -n1 | parallel -j +3 "_run_tests {} '$PHPUNIT {}'"
-      - name: Run TTY tests
-        run: |
-            script -c './phpunit --group tty' /dev/null
+          echo "$COMPONENTS" | xargs -n1 | parallel -j +3 "_run_tests {} 'cd {} && $COMPOSER_UP --prefer-lowest --prefer-stable && $PHPUNIT'"
