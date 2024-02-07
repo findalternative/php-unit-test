@@ -47,6 +47,8 @@ jobs:
         
       - name: Configure environment
         run: |
+          echo COLUMNS=120 >> $GITHUB_ENV
+
           git config --global user.email ""
           git config --global user.name "Symfony"
           git config --global init.defaultBranch main
@@ -58,10 +60,10 @@ jobs:
 
           SYMFONY_VERSION=$(grep ' VERSION = ' src/Symfony/Component/HttpKernel/Kernel.php | cut -d "'" -f2 | cut -d '.' -f 1-2)
           php .github/build-packages.php HEAD^ $SYMFONY_VERSION src/Symfony/Bridge/PhpUnit
-          echo COLUMNS=120 >> $GITHUB_ENV
 
           composer update --no-progress --ansi
           ./phpunit install
+
       - name: Run tests
         run: |
           _run_tests() {
@@ -77,6 +79,8 @@ jobs:
             fi
           }
           export -f _run_tests
+
           COMPONENTS=$(find src/Symfony -mindepth 2 -type f -name phpunit.xml.dist | xargs -I{} dirname {})
           PHPUNIT="$(pwd)/phpunit --exclude-group tty,benchmark,intl-data,integration"
+
           echo "$COMPONENTS" | xargs -n1 | parallel -j +3 "_run_tests {} '$PHPUNIT {}'"
