@@ -1,4 +1,5 @@
 name: PHP unit tests
+
 on:
   push:
   pull_request:
