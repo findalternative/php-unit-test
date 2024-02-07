@@ -78,11 +78,11 @@ jobs:
             local title="$1$FLIP"
             OUTPUT=$(bash -xc "$2" 2>&1) || ok=$?
             if [[ $ok -ne 0 ]]; then
-              printf "\n%-70s\n" $title "\\e[31mFAIL\\e[0m"
+              printf "\n%-80s\e[32m%10s\e[0m\n" $title 'FAIL'
+              echo "Exited with: $ok"
               echo "$OUTPUT"
-              echo "Job exited with: $ok"
             else
-              printf "\n%-68s%10s\n" $title "\\e[32mOK\\e[0m"
+              printf "\n%-80s\e[32m%10s\e[0m\n" $title 'OK'
             fi
           }
           export -f _run_tests
