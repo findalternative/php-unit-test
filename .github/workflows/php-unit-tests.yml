@@ -164,8 +164,9 @@ jobs:
             OUTPUT=$(bash -xc "$2" 2>&1) || ok=$?
             echo "::group::"
             if [[ $ok -ne 0 ]]; then
-              printf "%-80s\e[31m%10s\e[0m\n" $title 'FAIL'
+              printf "::group::%-80s\e[31m%10s\e[0m\n" $title 'FAIL'
               echo "$OUTPUT"
+              echo "::endgroup::"
             else
               printf "%-80s\e[32m%10s\e[0m\n" $title 'OK'
             fi
