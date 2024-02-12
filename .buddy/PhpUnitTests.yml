@@ -10,7 +10,6 @@
       docker_image_name: "library/php"
       docker_image_tag: "8.3"
       execute_commands:
-        - "(php --ri relay 2>&1 > /dev/null) || rm /etc/php/*/cli/conf.d/20-relay.ini"
         - "php .github/build-packages.php HEAD^ $SYMFONY_VERSION src/Symfony/Bridge/PhpUnit"
         - "composer update --no-progress --ansi"
         - "./phpunit install"
