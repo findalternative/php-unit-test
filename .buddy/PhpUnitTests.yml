@@ -11,6 +11,11 @@
       docker_image_tag: "8.3"
       execute_commands:
         - "cd baserepo"
+        - "git config --global user.email \"\""
+        - "git config --global user.name \"Symfony\""
+        - "git config --global init.defaultBranch main"
+        - "git config --global advice.detachedHead false"
+        - "export COLUMNS=120"
         - "php .github/build-packages.php HEAD^ $SYMFONY_VERSION src/Symfony/Bridge/PhpUnit"
         - "composer update --no-progress --ansi"
         - "./phpunit install"
@@ -32,7 +37,7 @@
         - 'echo "$COMPONENTS" | xargs -n1 | parallel -j +3 "_run_tests {} ''$PHPUNIT {}''"'
         - ""
       setup_commands:
-        - 'echo "memory_limit=-1" >> /usr/local/etc/php/conf.d/buddy.ini'
+        - 'echo "date.timezone=UTC,memory_limit=-1,default_socket_timeout=10,session.gc_probability=0,apc.enable_cli=1,zend.assertions=1" >> /usr/local/etc/php/conf.d/buddy.ini'
         - "apt-get update && apt-get install -y git zip parallel"
         - "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer"
         - ""
