@@ -1,4 +1,4 @@
-- pipeline: "tests"
+- pipeline: "php-unit-tests"
   events:
     - type: "PUSH"
       refs:
