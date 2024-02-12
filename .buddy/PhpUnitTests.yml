@@ -53,5 +53,8 @@
         - "apt-get install -y zlib1g-dev"
         - "apt-get install -y libzip-dev"
         - "docker-php-ext-install zip"
+        - ""
+        - "# php ext esl"
+        - "apt-get install -y libxslt1-dev"
         - "docker-php-ext-install xsl"
       shell: "BASH"
