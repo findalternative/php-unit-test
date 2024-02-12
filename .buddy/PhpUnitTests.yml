@@ -10,6 +10,7 @@
       docker_image_name: "library/php"
       docker_image_tag: "8.3"
       execute_commands:
+        - "cd baserepo"
         - "php .github/build-packages.php HEAD^ $SYMFONY_VERSION src/Symfony/Bridge/PhpUnit"
         - "composer update --no-progress --ansi"
         - "./phpunit install"
