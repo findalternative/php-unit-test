@@ -1,0 +1,56 @@
+- pipeline: "tests"
+  events:
+    - type: "PUSH"
+      refs:
+        - "refs/heads/main"
+  fail_on_prepare_env_warning: true
+  actions:
+    - action: "composer install"
+      type: "BUILD"
+      docker_image_name: "library/php"
+      docker_image_tag: "8.3"
+      execute_commands:
+        - "(php --ri relay 2>&1 > /dev/null) || sudo rm /etc/php/*/cli/conf.d/20-relay.ini"
+        - "php .github/build-packages.php HEAD^ $SYMFONY_VERSION src/Symfony/Bridge/PhpUnit"
+        - "composer update --no-progress --ansi"
+        - "./phpunit install"
+        - "_run_tests() {"
+        - "  local ok=0"
+        - '  local title="$1$FLIP"'
+        - '  OUTPUT=$(bash -xc "$2" 2>&1) || ok=$?'
+        - "  if [[ $ok -ne 0 ]]; then"
+        - "    printf \"::group::%-80s\e[31m%10s\e[0m\n\" $title 'FAIL'"
+        - '    echo "$OUTPUT"'
+        - '    echo "::endgroup::"'
+        - "  else"
+        - "    printf \"%-80s\e[32m%10s\e[0m\n\" $title 'OK'"
+        - "  fi"
+        - "}"
+        - "export -f _run_tests"
+        - "COMPONENTS=$(find src/Symfony -mindepth 2 -type f -name phpunit.xml.dist | xargs -I{} dirname {})"
+        - 'PHPUNIT="$(pwd)/phpunit --exclude-group tty,benchmark,intl-data,integration"'
+        - 'echo "$COMPONENTS" | xargs -n1 | parallel -j +3 "_run_tests {} ''$PHPUNIT {}''"'
+        - ""
+      setup_commands:
+        - 'echo "memory_limit=-1" >> /usr/local/etc/php/conf.d/buddy.ini'
+        - "apt-get update && apt-get install -y git zip"
+        - "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer"
+        - ""
+        - "# php ext gd"
+        - "apt-get install -y libfreetype6-dev"
+        - "apt-get install -y libjpeg62-turbo-dev"
+        - "apt-get install -y libpng-dev"
+        - "docker-php-ext-configure gd --with-freetype --with-jpeg"
+        - "docker-php-ext-install gd"
+        - ""
+        - "# php ext pdo_mysql"
+        - "docker-php-ext-configure pdo_mysql --with-pdo-mysql"
+        - "docker-php-ext-install pdo_mysql"
+        - ""
+        - "# php ext zip"
+        - "apt-get install -y zip"
+        - "apt-get install -y unzip"
+        - "apt-get install -y zlib1g-dev"
+        - "apt-get install -y libzip-dev"
+        - "docker-php-ext-install zip"
+      shell: "BASH"
