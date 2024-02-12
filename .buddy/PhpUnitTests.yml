@@ -37,7 +37,7 @@
         - 'echo "$COMPONENTS" | xargs -n1 | parallel -j +3 "_run_tests {} ''$PHPUNIT {}''"'
         - ""
       setup_commands:
-        - 'echo "date.timezone=UTC,memory_limit=-1,default_socket_timeout=10,session.gc_probability=0,apc.enable_cli=1,zend.assertions=1" >> /usr/local/etc/php/conf.d/buddy.ini'
+        - 'echo "date.timezone=UTC\nmemory_limit=-1\ndefault_socket_timeout=10\nsession.gc_probability=0\napc.enable_cli=1\nzend.assertions=1" >> /usr/local/etc/php/conf.d/buddy.ini'
         - "apt-get update && apt-get install -y git zip parallel"
         - "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer"
         - ""
