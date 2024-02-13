@@ -40,6 +40,7 @@ jobs:
         
       - name: Configure environment
         run: |
+          cd baserepo
           echo COLUMNS=120 >> $GITHUB_ENV
           php -r "print_r(implode(', ', get_loaded_extensions()));"
 
@@ -59,6 +60,7 @@ jobs:
 
       - name: Run tests
         run: |
+          cd baserepo
           _run_tests() {
             local ok=0
             local title="$1$FLIP"
