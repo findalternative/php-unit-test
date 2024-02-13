@@ -11,11 +11,12 @@
       docker_image_tag: "8.3"
       execute_commands:
         - "cd baserepo"
-        - 'git config --global user.email ""'
-        - 'git config --global user.name "Symfony"'
+        - "git config --global user.email \"\""
+        - "git config --global user.name \"Symfony\""
         - "git config --global init.defaultBranch main"
         - "git config --global advice.detachedHead false"
         - "export COLUMNS=120"
+        - "(php --ri relay 2>&1 > /dev/null) || sudo rm /etc/php/*/cli/conf.d/20-relay.ini"
         - "php .github/build-packages.php HEAD^ $SYMFONY_VERSION src/Symfony/Bridge/PhpUnit"
         - "composer update --no-progress --ansi"
         - "./phpunit install"
@@ -70,5 +71,5 @@
         - "# other ext"
         - "curl -sSLf -o /usr/local/bin/install-php-extensions https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions"
         - "chmod +x /usr/local/bin/install-php-extensions"
-        - "install-php-extensions amqp apcu igbinary intl memcached redis"
+        - "install-php-extensions amqp apcu igbinary intl memcached redis relay"
       shell: "BASH"
