@@ -30,9 +30,6 @@ jobs:
           fetch-depth: 3
           submodules: recursive
 
-      - name: Extract baserepo
-        run: "rm -rf baserepo/.git && mv .git/modules/baserepo baserepo/.git && mv baserepo ~/ && cd .. && rm -rf php-unit-tests && mv ~/baserepo php-unit-tests && cd php-unit-tests/ && sed -i '/worktree/d' .git/config"
-
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -44,6 +41,7 @@ jobs:
       - name: Configure environment
         run: |
           echo COLUMNS=120 >> $GITHUB_ENV
+          php -r "print_r(implode(', ', get_loaded_extensions()));"
 
           git config --global user.email ""
           git config --global user.name "Symfony"
