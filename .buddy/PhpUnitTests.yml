@@ -10,7 +10,7 @@
       docker_image_name: "library/php"
       docker_image_tag: "8.3"
       execute_commands:
-        - "rm -rf baserepo/.git && mv .git/modules/baserepo baserepo/.git && mv baserepo ~/ && cd .. && rm -rf php-unit-tests/.git* && mv ~/baserepo php-unit-tests && cd php-unit-tests/ && sed -i '/worktree/d' .git/config"
+        - "rm -rf baserepo/.git && mv .git/modules/baserepo baserepo/.git && mv baserepo ~/ && cd ~/baserepo && sed -i '/worktree/d' .git/config"
         - "git config --global user.email \"\""
         - "git config --global user.name \"Symfony\""
         - "git config --global init.defaultBranch main"
