@@ -10,15 +10,14 @@
       docker_image_name: "library/php"
       docker_image_tag: "8.3"
       execute_commands:
-        - "php -r \"print_r(implode(', ', get_loaded_extensions()));\""
+        - "rm -rf baserepo/.git && mv .git/modules/baserepo baserepo/.git && mv baserepo ~/ && cd ~/baserepo && sed -i '/worktree/d' .git/config"
         - "git config --global user.email \"\""
         - "git config --global user.name \"Symfony\""
         - "git config --global init.defaultBranch main"
         - "git config --global advice.detachedHead false"
         - "export COLUMNS=120"
-        - ""
         - "(php --ri relay 2>&1 > /dev/null) || sudo rm /etc/php/*/cli/conf.d/20-relay.ini"
-        - "ph.github/build-packages.php HEAD^ $SYMFONY_VERSION src/Symfony/Bridge/PhpUnit"
+        - "php .github/build-packages.php HEAD^ $SYMFONY_VERSION src/Symfony/Bridge/PhpUnit"
         - "composer update --no-progress --ansi"
         - "./phpunit install"
         - "_run_tests() {"
@@ -27,8 +26,6 @@
         - '  OUTPUT=$(bash -xc "$2" 2>&1) || ok=$?'
         - "  if [[ $ok -ne 0 ]]; then"
         - "    printf \"%-80s\e[31m%10s\e[0m\n\" $title 'FAIL'"
-        - '    echo "$OUTPUT"'
-        - '    echo ""'
         - "  else"
         - "    printf \"%-80s\e[32m%10s\e[0m\n\" $title 'OK'"
         - "  fi"
@@ -68,4 +65,10 @@
         - "# php ext mbstring"
         - "apt-get install -y libonig-dev"
         - "docker-php-ext-install mbstring"
+        - ""
+        - "# other ext"
+        - "curl -sSLf -o /usr/local/bin/install-php-extensions https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions"
+        - "chmod +x /usr/local/bin/install-php-extensions"
+        - "install-php-extensions amqp apcu igbinary intl memcached redis"
+        - "install-php-extensions relay"
       shell: "BASH"

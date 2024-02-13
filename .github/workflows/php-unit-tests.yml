@@ -3,31 +3,58 @@ on:
   push:
   pull_request:
 
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
 jobs:
 
   tests:
     name: Unit Tests
+
+    env:
+      extensions: amqp,apcu,igbinary,intl,mbstring,memcached,redis,relay
+
+    strategy:
+      matrix:
+        include:
+          - php: '8.3'
+      fail-fast: false
+      
     runs-on: ubuntu-20.04
-    container: library/php 
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 3
           submodules: recursive
 
+      - name: Extract baserepo
+        run: "rm -rf baserepo/.git && mv .git/modules/baserepo baserepo/.git && mv baserepo ~/ && cd .. && rm -rf php-unit-tests && mv ~/baserepo php-unit-tests && cd php-unit-tests/ && sed -i '/worktree/d' .git/config"
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          coverage: "none"
+          ini-values: date.timezone=UTC,memory_limit=-1,default_socket_timeout=10,session.gc_probability=0,apc.enable_cli=1,zend.assertions=1
+          php-version: "${{ matrix.php }}"
+          extensions: "${{ env.extensions }}"
+          tools: flex
+        
       - name: Configure environment
         run: |
-          sudo apt install -y git
-          cd baserepo
           echo COLUMNS=120 >> $GITHUB_ENV
-          php -r "print_r(implode(', ', get_loaded_extensions()));"
 
           git config --global user.email ""
           git config --global user.name "Symfony"
           git config --global init.defaultBranch main
           git config --global advice.detachedHead false
 
+          (php --ri relay 2>&1 > /dev/null) || sudo rm /etc/php/*/cli/conf.d/20-relay.ini
           COMPOSER_HOME="$(composer config home)"
           ([ -d "$COMPOSER_HOME" ] || mkdir "$COMPOSER_HOME") && cp .github/composer-config.json "$COMPOSER_HOME/config.json"
 
@@ -39,7 +66,6 @@ jobs:
 
       - name: Run tests
         run: |
-          cd baserepo
           _run_tests() {
             local ok=0
             local title="$1$FLIP"
