@@ -11,8 +11,8 @@
       docker_image_tag: "8.3"
       execute_commands:
         - "cd baserepo"
-        - "git config --global user.email \"\""
-        - "git config --global user.name \"Symfony\""
+        - 'git config --global user.email ""'
+        - 'git config --global user.name "Symfony"'
         - "git config --global init.defaultBranch main"
         - "git config --global advice.detachedHead false"
         - "export COLUMNS=120"
@@ -65,6 +65,7 @@
         - "docker-php-ext-install xsl"
         - ""
         - "# php ext mbstring"
+        - "apt-get install -y libonig-dev"
         - "docker-php-ext-install mbstring"
         - ""
         - "# other ext"
