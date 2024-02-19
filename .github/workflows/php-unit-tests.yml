@@ -3,10 +3,6 @@ on:
   push:
   pull_request:
 
-defaults:
-  run:
-    shell: bash
-
 permissions:
   contents: read
 
@@ -15,14 +11,8 @@ jobs:
   tests:
     name: Unit Tests
 
-    env:
-      extensions: amqp,apcu,igbinary,intl,mbstring,memcached,redis,relay
-
     strategy:
-      matrix:
-        include:
-          - php: '8.3'
-      fail-fast: false
+      fail-fast: true 
       
     runs-on: ubuntu-20.04
 
@@ -39,48 +29,13 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          coverage: "none"
-          ini-values: date.timezone=UTC,memory_limit=-1,default_socket_timeout=10,session.gc_probability=0,apc.enable_cli=1,zend.assertions=1
-          php-version: "${{ matrix.php }}"
-          extensions: "${{ env.extensions }}"
-          tools: flex
-        
-      - name: Configure environment
+          php-version: 8.3
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
+          coverage: none
+
+      - name: Run tests 
         run: |
-          echo COLUMNS=120 >> $GITHUB_ENV
-
-          git config --global user.email ""
-          git config --global user.name "Symfony"
-          git config --global init.defaultBranch main
-          git config --global advice.detachedHead false
-
-          (php --ri relay 2>&1 > /dev/null) || sudo rm /etc/php/*/cli/conf.d/20-relay.ini
-          COMPOSER_HOME="$(composer config home)"
-          ([ -d "$COMPOSER_HOME" ] || mkdir "$COMPOSER_HOME") && cp .github/composer-config.json "$COMPOSER_HOME/config.json"
-
-          SYMFONY_VERSION=$(grep ' VERSION = ' src/Symfony/Component/HttpKernel/Kernel.php | cut -d "'" -f2 | cut -d '.' -f 1-2)
-          php .github/build-packages.php HEAD^ $SYMFONY_VERSION src/Symfony/Bridge/PhpUnit
-
-          composer update --no-progress --ansi
-          ./phpunit install
-
-      - name: Run tests
-        run: |
-          _run_tests() {
-            local ok=0
-            local title="$1$FLIP"
-            OUTPUT=$(bash -xc "$2" 2>&1) || ok=$?
-            if [[ $ok -ne 0 ]]; then
-              printf "::group::%-80s\e[31m%10s\e[0m\n" $title 'FAIL'
-              echo "$OUTPUT"
-              echo "::endgroup::"
-            else
-              printf "%-80s\e[32m%10s\e[0m\n" $title 'OK'
-            fi
-          }
-          export -f _run_tests
-
-          COMPONENTS=$(find src/Symfony -mindepth 2 -type f -name phpunit.xml.dist | xargs -I{} dirname {})
-          PHPUNIT="$(pwd)/phpunit --exclude-group tty,benchmark,intl-data,integration"
-
-          echo "$COMPONENTS" | xargs -n1 | parallel -j +3 "_run_tests {} '$PHPUNIT {}'"
+          composer install --prefer-dist --no-interaction --no-progress
+          cp .env.example .env
+          php artisan key:generate
+          vendor/bin/phpunit
