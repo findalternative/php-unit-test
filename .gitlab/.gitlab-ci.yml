@@ -2,8 +2,7 @@ build:
   image: php:latest
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
-  script: 
-    - "cd baserepo"
+  before_script:
     - "[[ ! -e /.dockerenv ]] && exit 0"
     - "set -xe"
     - "apt-get update -yqq"
@@ -11,6 +10,14 @@ build:
     - "curl --location --output /usr/local/bin/phpunit \"https://phar.phpunit.de/phpunit.phar\""
     - "chmod +x /usr/local/bin/phpunit"
     - "docker-php-ext-install pdo_mysql"
+    - "wget https://composer.github.io/installer.sig -O - -q | tr -d '\n' > installer.sig"
+    - "php -r \"copy('https://getcomposer.org/installer', 'composer-setup.php');\""
+    - "php -r \"if (hash_file('SHA384', 'composer-setup.php') === file_get_contents('installer.sig')) { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;\""
+    - "php composer-setup.php"
+    - "php -r \"unlink('composer-setup.php'); unlink('installer.sig');\""
+    - "php composer.phar install"
+  script: 
+    - "cd baserepo"
     - "composer install --prefer-dist --no-interaction --no-progress"
     - "cp .env.example .env"
     - "php artisan key:generate"
