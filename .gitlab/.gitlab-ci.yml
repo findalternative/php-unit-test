@@ -24,4 +24,4 @@ build:
     - "php artisan key:generate"
     - "vendor/bin/phpunit"
   rules:
-    - if: $ENABLE_PIPELINES == "false"
+    - if: $ENABLE_PIPELINES == "true"
