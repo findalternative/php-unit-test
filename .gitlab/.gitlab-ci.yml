@@ -3,17 +3,17 @@ build:
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
   script: 
-    - cd baserepo
-    - [[ ! -e /.dockerenv ]] && exit 0
-    - set -xe
-    - apt-get update -yqq
-    - apt-get install git -yqq
-    - curl --location --output /usr/local/bin/phpunit "https://phar.phpunit.de/phpunit.phar"
-    - chmod +x /usr/local/bin/phpunit
-    - docker-php-ext-install pdo_mysql
-    - composer install --prefer-dist --no-interaction --no-progress
-    - cp .env.example .env
-    - php artisan key:generate
-    - vendor/bin/phpunit
+    - "cd baserepo"
+    - "[[ ! -e /.dockerenv ]] && exit 0"
+    - "set -xe"
+    - "apt-get update -yqq"
+    - "apt-get install git -yqq"
+    - "curl --location --output /usr/local/bin/phpunit \"https://phar.phpunit.de/phpunit.phar\""
+    - "chmod +x /usr/local/bin/phpunit"
+    - "docker-php-ext-install pdo_mysql"
+    - "composer install --prefer-dist --no-interaction --no-progress"
+    - "cp .env.example .env"
+    - "php artisan key:generate"
+    - "vendor/bin/phpunit"
   rules:
     - if: $ENABLE_PIPELINES == "true"
