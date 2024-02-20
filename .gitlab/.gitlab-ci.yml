@@ -2,6 +2,9 @@ build:
   image: php:latest
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
+  cache:
+    paths:
+      - vendor/
   script: 
     - "cd baserepo"
     - "[[ ! -e /.dockerenv ]] && exit 0"
