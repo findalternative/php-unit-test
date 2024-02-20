@@ -9,12 +9,12 @@
         type: "BUILD"
         docker_image_name: "library/php"
         docker_image_tag: "8.3"
-        execute_commands: |
-            cd baserepo
-            composer install --prefer-dist --no-interaction --no-progress
-            cp .env.example .env
-            php artisan key:generate
-            vendor/bin/phpunit
+        execute_commands:
+            - "cd baserepo"
+            - "composer install --prefer-dist --no-interaction --no-progress"
+            - "cp .env.example .env"
+            - "php artisan key:generate"
+            - "vendor/bin/phpunit"
 
         setup_commands:
             - 'echo "date.timezone=UTC\nmemory_limit=-1\ndefault_socket_timeout=10\nsession.gc_probability=0\napc.enable_cli=1\nzend.assertions=1" >> /usr/local/etc/php/conf.d/buddy.ini'
