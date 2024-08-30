@@ -2,6 +2,9 @@ image: php:latest
 pipelines:
   default:
     - step:
+        runs-on:
+          - self.hosted
+          - linux
         name: run pytest
         script: 
           - "apt-get update && apt-get install -y git unzip"
