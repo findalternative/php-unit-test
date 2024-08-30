@@ -1,4 +1,4 @@
-image: php:latest
+image: php:lates
 pipelines:
   default:
     - step:
